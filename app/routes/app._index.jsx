@@ -6,19 +6,27 @@ import { useLoaderData } from "@remix-run/react";
 import { json } from "@remix-run/node";
 import { useEffect } from "react";
 
-
-
 export const loader = async ({ request }) => {
   const { admin, session } = await authenticate.admin(request);
   
   // Get shop data from session
   const shop = session.shop.replace(".myshopify.com", "");
 
-  // Fetch currency formats
-  const response = await admin.graphql(
+  // First, check if we have the metafields
+  const metafieldResponse = await admin.graphql(
     `#graphql
       query {
         shop {
+          metafields(first: 2, namespace: "currency_formats") {
+            edges {
+              node {
+                id
+                namespace
+                key
+                value
+              }
+            }
+          }
           currencyFormats {
             moneyFormat
             moneyWithCurrencyFormat
@@ -28,12 +36,69 @@ export const loader = async ({ request }) => {
     `
   );
 
-  const responseJson = await response.json();
-  const currencyFormats = responseJson.data.shop.currencyFormats;
+  const metafieldJson = await metafieldResponse.json();
+  const metafields = metafieldJson.data.shop.metafields.edges;
+  const currencyFormats = metafieldJson.data.shop.currencyFormats;
+
+  // Check if we need to create metafields
+  const hasMoneyFormat = metafields.some(m => m.node.key === "money_format");
+  const hasMoneyWithCurrencyFormat = metafields.some(m => m.node.key === "money_with_currency_format");
+
+  if (!hasMoneyFormat || !hasMoneyWithCurrencyFormat) {
+    // Create metafields if they don't exist
+    await admin.graphql(
+      `#graphql
+        mutation createMetafields($input: [MetafieldsSetInput!]!) {
+          metafieldsSet(input: $input) {
+            metafields {
+              id
+              namespace
+              key
+              value
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `,
+      {
+        variables: {
+          input: [
+            {
+              namespace: "currency_formats",
+              key: "money_format",
+              value: currencyFormats.moneyFormat,
+              type: "single_line_text_field",
+              ownerId: `gid://shopify/Shop/${session.shop.split('.')[0]}`
+            },
+            {
+              namespace: "currency_formats",
+              key: "money_with_currency_format",
+              value: currencyFormats.moneyWithCurrencyFormat,
+              type: "single_line_text_field",
+              ownerId: `gid://shopify/Shop/${session.shop.split('.')[0]}`
+            }
+          ]
+        }
+      }
+    );
+  }
+
+  // Get the final values (either from metafields or current formats)
+  const finalFormats = {
+    moneyFormat: hasMoneyFormat 
+      ? metafields.find(m => m.node.key === "money_format").node.value 
+      : currencyFormats.moneyFormat,
+    moneyWithCurrencyFormat: hasMoneyWithCurrencyFormat 
+      ? metafields.find(m => m.node.key === "money_with_currency_format").node.value 
+      : currencyFormats.moneyWithCurrencyFormat
+  };
   
   return json({
     shop,
-    currencyFormats
+    currencyFormats: finalFormats
   });
 };
 
