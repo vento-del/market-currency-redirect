@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "0a30b7aa0e62e03c06c431f9f17311b4"
-application_url = "https://silver-specializing-equation-philosophy.trycloudflare.com"
+application_url = "https://publishers-four-outcome-dame.trycloudflare.com"
 embedded = true
 name = "Currency Converter"
 handle = "currency-converter-vento"
@@ -31,9 +31,9 @@ scopes = "write_products,read_products"
 
 [auth]
 redirect_urls = [
-  "https://silver-specializing-equation-philosophy.trycloudflare.com/auth/callback",
-  "https://silver-specializing-equation-philosophy.trycloudflare.com/auth/shopify/callback",
-  "https://silver-specializing-equation-philosophy.trycloudflare.com/api/auth/callback"
+  "https://publishers-four-outcome-dame.trycloudflare.com/auth/callback",
+  "https://publishers-four-outcome-dame.trycloudflare.com/auth/shopify/callback",
+  "https://publishers-four-outcome-dame.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]

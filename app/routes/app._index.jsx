@@ -6,108 +6,30 @@ import { useLoaderData } from "@remix-run/react";
 import { json } from "@remix-run/node";
 import { useEffect } from "react";
 
+
+
 export const loader = async ({ request }) => {
   const { admin, session } = await authenticate.admin(request);
   
   // Get shop data from session
   const shop = session.shop.replace(".myshopify.com", "");
 
-  // First, check if we have the metafields
-  const metafieldResponse = await admin.graphql(
+  // Fetch currency formats
+  const response = await admin.graphql(
     `#graphql
       query {
         shop {
-          metafields(first: 2, namespace: "currency_formats") {
-            edges {
-              node {
-                id
-                namespace
-                key
-                value
-              }
-            }
+          currencyFormats {
+            moneyFormat
+            moneyWithCurrencyFormat
           }
         }
       }
     `
   );
 
-  const metafieldJson = await metafieldResponse.json();
-  const metafields = metafieldJson.data.shop.metafields.edges;
-
-  // Check if we have both required metafields
-  const moneyFormatMetafield = metafields.find(m => m.node.key === "money_format");
-  const moneyWithCurrencyFormatMetafield = metafields.find(m => m.node.key === "money_with_currency_format");
-
-  let currencyFormats;
-
-  // Only fetch current formats if we don't have metafields
-  if (!moneyFormatMetafield || !moneyWithCurrencyFormatMetafield) {
-    const formatResponse = await admin.graphql(
-      `#graphql
-        query {
-          shop {
-            currencyFormats {
-              moneyFormat
-              moneyWithCurrencyFormat
-            }
-          }
-        }
-      `
-    );
-
-    const formatJson = await formatResponse.json();
-    const currentFormats = formatJson.data.shop.currencyFormats;
-
-    // Create metafields with current formats
-    await admin.graphql(
-      `#graphql
-        mutation createMetafields($input: [MetafieldsSetInput!]!) {
-          metafieldsSet(input: $input) {
-            metafields {
-              id
-              namespace
-              key
-              value
-            }
-            userErrors {
-              field
-              message
-            }
-          }
-        }
-      `,
-      {
-        variables: {
-          input: [
-            {
-              namespace: "currency_formats",
-              key: "money_format",
-              value: currentFormats.moneyFormat,
-              type: "single_line_text_field",
-              ownerId: `gid://shopify/Shop/${session.shop.split('.')[0]}`
-            },
-            {
-              namespace: "currency_formats",
-              key: "money_with_currency_format",
-              value: currentFormats.moneyWithCurrencyFormat,
-              type: "single_line_text_field",
-              ownerId: `gid://shopify/Shop/${session.shop.split('.')[0]}`
-            }
-          ]
-        }
-      }
-    );
-
-    // Use the current formats for this request
-    currencyFormats = currentFormats;
-  } else {
-    // Use the stored metafield values
-    currencyFormats = {
-      moneyFormat: moneyFormatMetafield.node.value,
-      moneyWithCurrencyFormat: moneyWithCurrencyFormatMetafield.node.value
-    };
-  }
+  const responseJson = await response.json();
+  const currencyFormats = responseJson.data.shop.currencyFormats;
   
   return json({
     shop,
@@ -130,19 +52,50 @@ export default function Index() {
   
   const { shop, currencyFormats } = useLoaderData();
   const [copied, setCopied] = useState("");
+  const [processedFormats, setProcessedFormats] = useState({
+    withCurrency: "",
+    withoutCurrency: ""
+  });
+
+  useEffect(() => {
+    // Decode HTML entities
+    const decodeHtmlEntities = (str) => {
+      const textarea = document.createElement('textarea');
+      textarea.innerHTML = str;
+      return textarea.value;
+    };
+    
+    // Strip any HTML tags from the currency format
+    const stripHtml = (str) => str.replace(/<[^>]*>/g, '');
+    
+    // Check if the format already contains currency-changer span
+    const hasCurrencyChanger = (str) => str.includes('class="currency-changer"');
+    
+    // Process the currency formats
+    const processFormat = (format) => {
+      // First decode any HTML entities
+      const decodedFormat = decodeHtmlEntities(format);
+      // Then check if it already has currency-changer
+      if (hasCurrencyChanger(decodedFormat)) {
+        return decodedFormat;
+      }
+      // If no currency-changer, strip HTML and add the span
+      const strippedFormat = stripHtml(decodedFormat);
+      return `<span class="currency-changer">${strippedFormat}</span>`;
+    };
+    
+    // Process and set the formats
+    setProcessedFormats({
+      withCurrency: processFormat(currencyFormats.moneyWithCurrencyFormat),
+      withoutCurrency: processFormat(currencyFormats.moneyFormat)
+    });
+  }, [currencyFormats]);
 
   const handleCopy = (text, type) => {
     navigator.clipboard.writeText(text);
     setCopied(type);
     setTimeout(() => setCopied(""), 2000);
   };
-
-  // Strip any HTML tags from the currency format
-  const stripHtml = (str) => str.replace(/<[^>]*>/g, '');
-  
-  // Use the fetched currency formats without HTML tags
-  const htmlWithCurrency = `<span class="currency-changer">${stripHtml(currencyFormats.moneyWithCurrencyFormat)}</span>`;
-  const htmlWithoutCurrency = `<span class="currency-changer">${stripHtml(currencyFormats.moneyFormat)}</span>`;
 
   const themeEditorUrl = `https://${shop}.myshopify.com/admin/themes/current/editor?context=apps&template=index&activateAppId=010de1f3-20a8-4c27-8078-9d5535ccae26/helloCurrency`;
 
@@ -182,16 +135,15 @@ export default function Index() {
                         <Text variant="headingMd" as="h3">HTML with currency</Text>
                         <Box background="bg-surface-secondary" padding="300" borderRadius="200">
                           <InlineStack align="space-between">
-                            <Text as="span" variant="bodyLg">{htmlWithCurrency}</Text>
+                            <Text as="span" variant="bodyLg">{processedFormats.withCurrency}</Text>
                             <Button
-                              onClick={() => handleCopy(htmlWithCurrency, "with")}
+                              onClick={() => handleCopy(processedFormats.withCurrency, "with")}
                               variant="plain"
                             >
                               {copied === "with" ? "Copied!" : "Copy"}
                             </Button>
                           </InlineStack>
                         </Box>
-                        
                       </BlockStack>
                     </Box>
 
@@ -200,16 +152,15 @@ export default function Index() {
                         <Text variant="headingMd" as="h3">HTML without currency</Text>
                         <Box background="bg-surface-secondary" padding="300" borderRadius="200">
                           <InlineStack align="space-between">
-                            <Text as="span" variant="bodyLg">{htmlWithoutCurrency}</Text>
+                            <Text as="span" variant="bodyLg">{processedFormats.withoutCurrency}</Text>
                             <Button
-                              onClick={() => handleCopy(htmlWithoutCurrency, "without")}
+                              onClick={() => handleCopy(processedFormats.withoutCurrency, "without")}
                               variant="plain"
                             >
                               {copied === "without" ? "Copied!" : "Copy"}
                             </Button>
                           </InlineStack>
                         </Box>
-                       
                       </BlockStack>
                     </Box>
                   </BlockStack>
