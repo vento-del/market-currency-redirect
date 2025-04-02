@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Spinner } from "@shopify/polaris";
 import { authenticate } from "../shopify.server";
 import { CurrencySelector } from "../components/CurrencySelector";
-import { redirect } from "@remix-run/node";
+import { json } from "@remix-run/node";
 
 export const loader = async ({ request }) => {
   const { admin, session } = await authenticate.admin(request);
@@ -30,25 +30,31 @@ export const loader = async ({ request }) => {
   const responseJson = await response.json();
   const hasMetafields = responseJson.data.shop.metafields.edges.length > 0;
 
-  if (!hasMetafields) {
-    // Redirect to Shopify's pricing page
-    const pricingUrl = `https://admin.shopify.com/store/${shopHandle}/charges/currency-converter-vento/pricing_plans`;
-    return redirect(pricingUrl, {
-      status: 302,
-      headers: {
-        "Location": pricingUrl,
-      },
-    });
-  }
-
-  return null;
+  return json({
+    isFirstVisit: !hasMetafields,
+    shopHandle
+  });
 };
 
 export default function Index() {
   const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(null);
 
   useEffect(() => {
-    setLoading(false);
+    fetch("/api/first-visit")
+      .then(response => response.json())
+      .then(result => {
+        setData(result);
+        if (result.isFirstVisit) {
+          const pricingUrl = `https://admin.shopify.com/store/${result.shopHandle}/charges/currency-converter-vento/pricing_plans`;
+          window.open(pricingUrl, '_blank');
+        }
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error("Error checking first visit:", error);
+        setLoading(false);
+      });
   }, []);
 
   if (loading) {

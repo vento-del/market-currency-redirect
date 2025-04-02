@@ -1,39 +1,34 @@
 import { authenticate } from "../shopify.server";
+import { json } from "@remix-run/node";
 
 export const loader = async ({ request }) => {
-  const { admin } = await authenticate.admin(request);
-
-  try {
-    // Check if there are any metafields for the app
-    const response = await admin.graphql(
-      `#graphql
-        query {
-          shop {
-            metafields(first: 1) {
-              edges {
-                node {
-                  id
-                }
+  const { admin, session } = await authenticate.admin(request);
+  
+  // Get shop handle from session
+  const shopHandle = session.shop.replace(".myshopify.com", "");
+  
+  // Check if this is first visit by checking for metafields
+  const response = await admin.graphql(
+    `#graphql
+      query {
+        shop {
+          metafields(first: 1) {
+            edges {
+              node {
+                id
               }
             }
           }
         }
-      `
-    );
+      }
+    `
+  );
 
-    const responseJson = await response.json();
-    const hasMetafields = responseJson.data.shop.metafields.edges.length > 0;
+  const responseJson = await response.json();
+  const hasMetafields = responseJson.data.shop.metafields.edges.length > 0;
 
-    return {
-      isFirstVisit: !hasMetafields,
-    };
-  } catch (error) {
-    console.error("Error checking first visit:", error);
-    return new Response(JSON.stringify({ error: "Failed to check first visit" }), {
-      status: 500,
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-  }
+  return json({
+    isFirstVisit: !hasMetafields,
+    shopHandle
+  });
 }; 
