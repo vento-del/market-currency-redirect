@@ -3,14 +3,56 @@ import { CurrencySelector } from "../components/CurrencySelector";
 import { authenticate } from "../shopify.server";
 import { useState } from "react";
 import { useLoaderData } from "@remix-run/react";
-import { json, redirect } from "@remix-run/node";
+import { json } from "@remix-run/node";
 import { useEffect } from "react";
 
 export const loader = async ({ request }) => {
-  const { session } = await authenticate.admin(request);
+  const { admin, session } = await authenticate.admin(request);
   
-  // Redirect to the pricing page
-  return redirect("/app/pricing");
+  // Get shop data from session
+  const shop = session.shop.replace(".myshopify.com", "");
+  const storeHandle = session.shop;
+
+  // Check subscription status
+  const subscriptionResponse = await admin.graphql(
+    `#graphql
+      query {
+        appInstallation {
+          activeSubscriptions {
+            status
+            currentPeriodEnd
+          }
+        }
+      }
+    `
+  );
+
+  const subscriptionJson = await subscriptionResponse.json();
+  const hasActiveSubscription = subscriptionJson.data.appInstallation.activeSubscriptions.length > 0;
+
+  // Fetch currency formats
+  const response = await admin.graphql(
+    `#graphql
+      query {
+        shop {
+          currencyFormats {
+            moneyFormat
+            moneyWithCurrencyFormat
+          }
+        }
+      }
+    `
+  );
+
+  const responseJson = await response.json();
+  const currencyFormats = responseJson.data.shop.currencyFormats;
+  
+  return json({
+    shop,
+    storeHandle,
+    currencyFormats,
+    hasActiveSubscription
+  });
 };
 
 export default function Index() {
@@ -26,7 +68,7 @@ export default function Index() {
     document.body.appendChild(script2);
   }, []);
   
-  const { shop, currencyFormats } = useLoaderData();
+  const { shop, storeHandle, currencyFormats, hasActiveSubscription } = useLoaderData();
   const [copied, setCopied] = useState("");
   const [processedFormats, setProcessedFormats] = useState({
     withCurrency: "",
@@ -74,6 +116,139 @@ export default function Index() {
   };
 
   const themeEditorUrl = `https://${shop}.myshopify.com/admin/themes/current/editor?context=apps&template=index&activateAppId=010de1f3-20a8-4c27-8078-9d5535ccae26/helloCurrency`;
+  const pricingPlansUrl = `https://admin.shopify.com/store/${storeHandle}/charges/currency-converter-vento/pricing_plans`;
 
-  return null;
+  return (
+    <Page>
+      <BlockStack gap="500">
+        <Text variant="headingXl" as="h1">Dashboard</Text>
+        
+        <Layout>
+          <Layout.Section>
+            <Card>
+              <BlockStack gap="400" padding="400">
+                <Text variant="headingLg" as="h2">
+                  Select Your Plan
+                </Text>
+                <Text as="p" variant="bodyMd">
+                  Choose the plan that best suits your needs to start using the currency converter.
+                </Text>
+                <Button
+                  variant="primary"
+                  url={pricingPlansUrl}
+                  target="_blank"
+                  external
+                >
+                  Select Plan
+                </Button>
+              </BlockStack>
+            </Card>
+          </Layout.Section>
+
+          <Layout.Section>
+            <Card>
+              <BlockStack gap="400" padding="400">
+                <Text variant="headingLg" as="h2">
+                  Step 1: Set up money format
+                </Text>
+                <Text as="p" variant="bodyMd">
+                  This option allows you to set the money format of your store, which is essential for the app to function seamlessly.
+                </Text>
+                <Text as="p" variant="headingLg">
+                  Steps to Follow
+                </Text>
+                <BlockStack gap="300">
+                  <Text as="p">
+                    Go to{" "}
+                    <Link url="https://admin.shopify.com/store/teststorecvd/settings/general#currency-display" target="_blank">
+                      Shopify Settings {'->'} General
+                    </Link>
+                  </Text>
+                  <Text as="p">Under Store Currency section, select Change formatting</Text>
+                  <Text as="p">Copy & Paste the below modified Money Formats to HTML with currency and HTML without currency section</Text>
+                  <Text as="p">Click Save button on right top of the screen</Text>
+                </BlockStack>
+
+                <Box paddingBlockStart="400">
+                  <BlockStack gap="400">
+                    <Box>
+                      <BlockStack gap="200">
+                        <Text variant="headingMd" as="h3">HTML with currency</Text>
+                        <Box background="bg-surface-secondary" padding="300" borderRadius="200">
+                          <InlineStack align="space-between">
+                            <Text as="span" variant="bodyLg">{processedFormats.withCurrency}</Text>
+                            <Button
+                              onClick={() => handleCopy(processedFormats.withCurrency, "with")}
+                              variant="plain"
+                            >
+                              {copied === "with" ? "Copied!" : "Copy"}
+                            </Button>
+                          </InlineStack>
+                        </Box>
+                      </BlockStack>
+                    </Box>
+
+                    <Box>
+                      <BlockStack gap="200">
+                        <Text variant="headingMd" as="h3">HTML without currency</Text>
+                        <Box background="bg-surface-secondary" padding="300" borderRadius="200">
+                          <InlineStack align="space-between">
+                            <Text as="span" variant="bodyLg">{processedFormats.withoutCurrency}</Text>
+                            <Button
+                              onClick={() => handleCopy(processedFormats.withoutCurrency, "without")}
+                              variant="plain"
+                            >
+                              {copied === "without" ? "Copied!" : "Copy"}
+                            </Button>
+                          </InlineStack>
+                        </Box>
+                      </BlockStack>
+                    </Box>
+                  </BlockStack>
+                </Box>
+              </BlockStack>
+            </Card>
+          </Layout.Section>
+
+          <Layout.Section>
+            <Card>
+              <BlockStack gap="400" padding="400">
+                <Text variant="headingLg" as="h2">
+                  Step 2: Select Currency
+                </Text>
+                {!hasActiveSubscription ? (
+                  <Text as="p" variant="bodyMd" color="critical">
+                    Please select a plan to enable currency selection.
+                  </Text>
+                ) : (
+                  <CurrencySelector />
+                )}
+              </BlockStack>
+            </Card>
+          </Layout.Section>
+
+          <Layout.Section>
+            <Card>
+              <BlockStack gap="400" padding="400">
+                <Text variant="headingLg" as="h2">
+                  Step 3: Theme Editor Access
+                </Text>
+                <Text as="p" variant="bodyLg">
+                  Click below to add currency selector to your website
+                </Text>
+                <Button
+                  variant="primary"
+                  url={themeEditorUrl}
+                  target="_blank"
+                  external
+                >
+                  Add Currency Selector
+                </Button>
+              </BlockStack>
+            </Card>
+          </Layout.Section>
+        </Layout>
+      </BlockStack>
+    </Page>
+  );
 }
