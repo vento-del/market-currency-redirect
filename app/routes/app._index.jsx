@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Page, Layout, Card, Text, Button, Spinner } from "@shopify/polaris";
 import { authenticate } from "../shopify.server";
-import { CurrencySelector } from "~/components/CurrencySelector";
-import { PricingPage } from "~/components/PricingPage";
+import { CurrencySelector } from "../components/CurrencySelector";
+import { PricingPage } from "../components/PricingPage";
 
 export const loader = async ({ request }) => {
   await authenticate.admin(request);
