@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Spinner } from "@shopify/polaris";
 import { authenticate } from "../shopify.server";
 import { CurrencySelector } from "../components/CurrencySelector";
+import { redirect } from "@remix-run/node";
 
 export const loader = async ({ request }) => {
   const { admin, session } = await authenticate.admin(request);
@@ -32,7 +33,12 @@ export const loader = async ({ request }) => {
   if (!hasMetafields) {
     // Redirect to Shopify's pricing page
     const pricingUrl = `https://admin.shopify.com/store/${shopHandle}/charges/currency-converter-vento/pricing_plans`;
-    return Response.redirect(pricingUrl);
+    return redirect(pricingUrl, {
+      status: 302,
+      headers: {
+        "Location": pricingUrl,
+      },
+    });
   }
 
   return null;
