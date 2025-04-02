@@ -13,7 +13,7 @@ export const loader = async ({ request }) => {
   const shop = session.shop.replace(".myshopify.com", "");
   const storeHandle = session.shop.replace(".myshopify.com", "");
 
-  // Check subscription status
+  // Check subscription status and get plan details
   const subscriptionResponse = await admin.graphql(
     `#graphql
       query {
@@ -21,6 +21,7 @@ export const loader = async ({ request }) => {
           activeSubscriptions {
             status
             currentPeriodEnd
+            name
           }
         }
       }
@@ -28,7 +29,9 @@ export const loader = async ({ request }) => {
   );
 
   const subscriptionJson = await subscriptionResponse.json();
-  const hasActiveSubscription = subscriptionJson.data.appInstallation.activeSubscriptions.length > 0;
+  const subscriptions = subscriptionJson.data.appInstallation.activeSubscriptions;
+  const hasActiveSubscription = subscriptions.length > 0;
+  const activePlan = hasActiveSubscription ? subscriptions[0] : null;
 
   // Fetch currency formats
   const response = await admin.graphql(
@@ -51,7 +54,8 @@ export const loader = async ({ request }) => {
     shop,
     storeHandle,
     currencyFormats,
-    hasActiveSubscription
+    hasActiveSubscription,
+    activePlan
   });
 };
 
@@ -68,7 +72,7 @@ export default function Index() {
     document.body.appendChild(script2);
   }, []);
   
-  const { shop, storeHandle, currencyFormats, hasActiveSubscription } = useLoaderData();
+  const { shop, storeHandle, currencyFormats, hasActiveSubscription, activePlan } = useLoaderData();
   const [copied, setCopied] = useState("");
   const [processedFormats, setProcessedFormats] = useState({
     withCurrency: "",
@@ -128,19 +132,40 @@ export default function Index() {
             <Card>
               <BlockStack gap="400" padding="400">
                 <Text variant="headingLg" as="h2">
-                  Select Your Plan
+                  {hasActiveSubscription ? "Current Plan" : "Select Your Plan"}
                 </Text>
-                <Text as="p" variant="bodyMd">
-                  Choose the plan that best suits your needs to start using the currency converter.
-                </Text>
-                <Button
-                  variant="primary"
-                  url={pricingPlansUrl}
-                  target="_blank"
-                  external
-                >
-                  Select Plan
-                </Button>
+                {hasActiveSubscription ? (
+                  <BlockStack gap="300">
+                    <Text as="p" variant="bodyMd">
+                      You are currently on the {activePlan.name} plan
+                    </Text>
+                    <Text as="p" variant="bodyMd">
+                      Your subscription will renew on {new Date(activePlan.currentPeriodEnd).toLocaleDateString()}
+                    </Text>
+                    <Button
+                      variant="primary"
+                      url={pricingPlansUrl}
+                      target="_blank"
+                      external
+                    >
+                      Change Plan
+                    </Button>
+                  </BlockStack>
+                ) : (
+                  <BlockStack gap="300">
+                    <Text as="p" variant="bodyMd">
+                      Choose the plan that best suits your needs to start using the currency converter.
+                    </Text>
+                    <Button
+                      variant="primary"
+                      url={pricingPlansUrl}
+                      target="_blank"
+                      external
+                    >
+                      Select Plan
+                    </Button>
+                  </BlockStack>
+                )}
               </BlockStack>
             </Card>
           </Layout.Section>
