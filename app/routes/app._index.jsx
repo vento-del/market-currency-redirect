@@ -11,7 +11,7 @@ export const loader = async ({ request }) => {
   
   // Get shop data from session
   const shop = session.shop.replace(".myshopify.com", "");
-  const storeHandle = session.shop;
+  const storeHandle = session.shop.replace(".myshopify.com", "");
 
   // Check subscription status
   const subscriptionResponse = await admin.graphql(
@@ -217,11 +217,21 @@ export default function Index() {
                   Step 2: Select Currency
                 </Text>
                 {!hasActiveSubscription ? (
-                  <Text as="p" variant="bodyMd" color="critical">
-                    Please select a plan to enable currency selection.
-                  </Text>
+                  <BlockStack gap="300">
+                    <Text as="p" variant="bodyMd" color="critical">
+                      Please select a plan to enable currency selection.
+                    </Text>
+                    <Text as="p" variant="bodyMd">
+                      The currency selector will be available after you select a plan.
+                    </Text>
+                  </BlockStack>
                 ) : (
-                  <CurrencySelector />
+                  <BlockStack gap="300">
+                    <CurrencySelector />
+                    <Text as="p" variant="bodyMd">
+                      You can now select and manage your store's currencies.
+                    </Text>
+                  </BlockStack>
                 )}
               </BlockStack>
             </Card>
