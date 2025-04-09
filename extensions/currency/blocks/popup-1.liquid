@@ -1,0 +1,98 @@
+<link rel="stylesheet" href="{{ 'popup-1.css' | asset_url }}">
+<script src="{{ 'popup-1.js' | asset_url }}" async></script>
+
+<button id="vento-custom-button" class="vento-hidden" data-currency-selector="true" style="background-color: {{ block.settings.Currency_selector_Button_bg_color }};color:{{ block.settings.Currency_selector_Button_text_color }}">{{ shop.metafields.custom.selected_currencies }}</button>
+<input
+  type="hidden"
+  id="vento-currency-convertorid"
+  name="currency_convertor"
+  value="{{ shop.metafields.markeet.all_markets_data }}"
+>
+<span class="vento-curriency-metafiled-span vento-hidden">{{ shop.metafields.markeet.all_markets_data }}</span>
+<div id="vento-my-shopify-popup">
+  <div id="vento-popup-overlay"></div>
+  <div id="vento-popup-content">
+    <h2>Welcome to our store!</h2>
+    <p>Please select your preferences to continue shopping:</p>
+
+
+      <div class="vento-localization-wrapper">
+        <div class="vento-localization-selector">
+          <label for="vento-CountrySelector" class="vento-selector-label">Country/region</label>
+          <vento-localization-form>
+            {% form 'localization' %}
+              <div class="vento-disclosure">
+                <button type="button" class="vento-disclosure__button" aria-expanded="false" aria-controls="vento-CountryList">
+                  <span>{{ localization.country.name }} </span>
+                  <svg aria-hidden="true" focusable="false" role="presentation" class="vento-icon vento-icon-caret" viewBox="0 0 10 6">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M9.354.646a.5.5 0 00-.708 0L5 4.293 1.354.646a.5.5 0 00-.708.708l4 4a.5.5 0 00.708 0l4-4a.5.5 0 000-.708z" fill="currentColor"></path>
+                  </svg>
+                </button>
+                <ul id="vento-CountryList" role="list" class="vento-disclosure__list" hidden>
+                  {% for country in localization.available_countries %}
+                    <li class="vento-disclosure__item" tabindex="-1">
+                      <a href="#"{% if country.iso_code == localization.country.iso_code %} aria-current="true"{% endif %} data-value="{{ country.iso_code }}">
+                        {{ country.name }} 
+                      </a>
+                    </li>
+                  {% endfor %}
+                </ul>
+                <input type="hidden" name="country_code" value="{{ localization.country.iso_code }}">
+              </div>
+            {% endform %}
+          </vento-localization-form>
+        </div>
+
+
+        <div class="vento-localization-selector">
+          <label for="vento-LanguageSelector" class="vento-selector-label">Language</label>
+          <vento-localization-form>
+            {% form 'localization' %}
+              <div class="vento-disclosure">
+                <button type="button" class="vento-disclosure__button" aria-expanded="false" aria-controls="vento-LanguageList">
+                  <span>{{ localization.language.endonym_name }}</span>
+                  <svg aria-hidden="true" focusable="false" role="presentation" class="vento-icon vento-icon-caret" viewBox="0 0 10 6">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M9.354.646a.5.5 0 00-.708 0L5 4.293 1.354.646a.5.5 0 00-.708.708l4 4a.5.5 0 00.708 0l4-4a.5.5 0 000-.708z" fill="currentColor"></path>
+                  </svg>
+                </button>
+                <ul id="vento-LanguageList" role="list" class="vento-disclosure__list" hidden>
+                  {% for language in localization.available_languages %}
+                    <li class="vento-disclosure__item" tabindex="-1">
+                      <a href="#"{% if language.iso_code == localization.language.iso_code %} aria-current="true"{% endif %} data-value="{{ language.iso_code }}">
+                        {{ language.endonym_name }}
+                      </a>
+                    </li>
+                  {% endfor %}
+                </ul>
+                <input type="hidden" name="language_code" value="{{ localization.language.iso_code }}">
+              </div>
+            {% endform %}
+          </vento-localization-form>
+        </div>
+
+      </div>
+
+
+    <div class="vento-popup-actions">
+      <button id="vento-popup-close-btn">Continue Shopping</button>
+    </div>
+  </div>
+</div>
+{% schema %}
+    {
+      "name": "Popup",
+      "target": "body",
+      "class": "vento-Center-Popup",
+
+      "settings": [
+        {
+      "type": "color",
+      "id": "Currency_selector_Button_bg_color",
+      "label": "Currency Selector Button Background Color",
+      "default": "#000000"
+    },
+
+      ]
+    }
+    {% endschema %}
+    

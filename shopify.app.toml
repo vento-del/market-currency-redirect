@@ -1,10 +1,10 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "0a30b7aa0e62e03c06c431f9f17311b4"
-application_url = "https://publishers-four-outcome-dame.trycloudflare.com"
+client_id = "d92e8a9c0c52d4ce1ccd571422ba170f"
+application_url = "https://scholars-paper-weak-understanding.trycloudflare.com"
 embedded = true
-name = "Currency Converter"
-handle = "currency-converter-vento"
+name = "spinner"
+handle = "spinner-7"
 
 [build]
 include_config_on_deploy = true
@@ -27,13 +27,13 @@ api_version = "2025-01"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products,read_products"
+scopes = "write_products,read_products,read_markets,write_markets"
 
 [auth]
 redirect_urls = [
-  "https://publishers-four-outcome-dame.trycloudflare.com/auth/callback",
-  "https://publishers-four-outcome-dame.trycloudflare.com/auth/shopify/callback",
-  "https://publishers-four-outcome-dame.trycloudflare.com/api/auth/callback"
+  "https://scholars-paper-weak-understanding.trycloudflare.com/auth/callback",
+  "https://scholars-paper-weak-understanding.trycloudflare.com/auth/shopify/callback",
+  "https://scholars-paper-weak-understanding.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]
