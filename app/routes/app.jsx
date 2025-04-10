@@ -24,7 +24,7 @@ export default function App() {
           Home
         </Link>
         <Link to="/app/privacy">Privacy policy</Link>
-        <Link to="/app/market">Market Page</Link>
+        {/* <Link to="/app/market">Market Page</Link> */}
       </NavMenu>
       <Outlet />
     </AppProvider>
