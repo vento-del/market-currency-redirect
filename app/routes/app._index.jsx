@@ -910,8 +910,13 @@ export default function Index() {
             {secondaryMarkets.length > 0 && (
               <Layout.Section>
                 <Card>
-                  <BlockStack gap="500">
-                    <Text as="h2" variant="headingMd">Secondary Markets (Customizable)</Text>
+                  <BlockStack gap="500" padding="400">
+                    <Text variant="headingLg" as="h2">
+                      Step 1: Secondary Markets (Customizable)
+                    </Text>
+                    <Text as="p" variant="bodyMd">
+                      Customize the currencies for your secondary markets below.
+                    </Text>
                     <DataTable
                       columnContentTypes={["text", "text", "text", "text"]}
                       headings={["Market Name", "Countries", "Currency", "Status"]}
@@ -929,7 +934,7 @@ export default function Index() {
           <Card>
             <BlockStack gap="400" padding="400">
               <Text variant="headingLg" as="h2">
-                Step 1: Set up money format
+                Step 2: Set up money format
               </Text>
               <Text as="p" variant="bodyMd">
                 This option allows you to set the money format of your store, which is essential for the app to function seamlessly.
@@ -985,6 +990,36 @@ export default function Index() {
                     </BlockStack>
                   </Box>
                 </BlockStack>
+              </Box>
+            </BlockStack>
+          </Card>
+        </Layout.Section>
+        
+        <Layout.Section>
+          <Card>
+            <BlockStack gap="400" padding="400">
+              <Text variant="headingLg" as="h2">
+                Step 3: Theme Editor
+              </Text>
+              <Text as="p" variant="bodyMd">
+                Open the Theme Editor to customize your theme settings for the currency converter.
+              </Text>
+              <Box paddingBlockStart="300" width="100%">
+                <Button
+                  monochrome
+                  size="large"
+                  url={`https://${shopInfo?.name}.myshopify.com/admin/themes/current/editor?context=apps&template=index&activateAppId=126e4f0f-b7e5-4dfc-8757-e97a4452ad3a/popup-1`}
+                  external
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    window.open(`https://${shopInfo?.name}.myshopify.com/admin/themes/current/editor?context=apps&template=index&activateAppId=126e4f0f-b7e5-4dfc-8757-e97a4452ad3a/popup-1`, '_blank', 'noopener,noreferrer');
+                    return false;
+                  }}
+                  fullWidth
+                >
+                  <Text color="text-inverse">Open Theme Editor</Text>
+                </Button>
               </Box>
             </BlockStack>
           </Card>

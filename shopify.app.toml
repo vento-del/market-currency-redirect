@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "d92e8a9c0c52d4ce1ccd571422ba170f"
-application_url = "https://tells-purchases-mhz-panels.trycloudflare.com"
+application_url = "https://swiss-sells-society-distinction.trycloudflare.com"
 embedded = true
 name = "Rabbi Market Redirect"
 handle = "spinner-7"
@@ -31,9 +31,9 @@ scopes = "write_products,read_products,read_markets,write_markets"
 
 [auth]
 redirect_urls = [
-  "https://tells-purchases-mhz-panels.trycloudflare.com/auth/callback",
-  "https://tells-purchases-mhz-panels.trycloudflare.com/auth/shopify/callback",
-  "https://tells-purchases-mhz-panels.trycloudflare.com/api/auth/callback"
+  "https://swiss-sells-society-distinction.trycloudflare.com/auth/callback",
+  "https://swiss-sells-society-distinction.trycloudflare.com/auth/shopify/callback",
+  "https://swiss-sells-society-distinction.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]
